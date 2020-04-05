@@ -1,9 +1,10 @@
-from fastapi import FastAPI 
+from fastapi import FastAPI, HTTPException
 
 from pydantic import BaseModel
 
 app = FastAPI()
 app.counter = 0
+app.pacjenci = []
 
 @app.get('/')
 def Hello():
@@ -35,12 +36,20 @@ class DajMiCosResp(BaseModel):
 
 @app.post("/patient")#, response_model=DajMiCosResp)
 def patientfun(patient: DajMiCosRq):
-	#global counter
 	app.counter += 1
 	pacjent = DajMiCosResp(id = app.counter, patient = patient)
-	#app.counter += 1
+	app.pacjenci.append(patient)
 	return pacjent
 	#return DajMiCosResp(patient=rq.dict())
+
+@app.get("/patient/{pk}")
+def pacjenci(pk: int):
+	if pk < len(app.pacjenci[pk-1]):
+		return app.pacjenci[pk-1]
+	else:
+		raise HTTPException(status_code = 204, detail = "Index not found")
+
+
 
 
 
