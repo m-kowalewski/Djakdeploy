@@ -36,9 +36,10 @@ class DajMiCosResp(BaseModel):
 
 @app.post("/patient")#, response_model=DajMiCosResp)
 def patientfun(patient: DajMiCosRq):
+	app.pacjenci.append(patient)
 	app.counter += 1
 	pacjent = DajMiCosResp(id = app.counter, patient = patient)
-	app.pacjenci.append(pacjent)
+
 	return pacjent
 	#return DajMiCosResp(patient=rq.dict())
 
