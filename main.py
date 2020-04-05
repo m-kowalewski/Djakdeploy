@@ -45,7 +45,7 @@ def patientfun(patient: DajMiCosRq):
 
 @app.get("/patient/{pk}")
 def pacjenci(pk: int):
-	if pk < len(app.pacjenci[pk-1]):
+	if pk < len(app.pacjenci):
 		return app.pacjenci[pk-1]
 	else:
 		raise HTTPException(status_code = 204, detail = "Index not found")
