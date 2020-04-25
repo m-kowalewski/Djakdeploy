@@ -10,6 +10,10 @@ app.pacjenci = []
 def Hello():
 	return {"message": "Hello World during the coronavirus pandemic!"}
 
+@app.get('/welcome')
+def Hello():
+	return {"message": "Hello World during the coronavirus pandemic!"}
+
 @app.get("/method")
 def method():
 	return {"method":"GET"}
