@@ -111,3 +111,4 @@ def logout(response: Response, session_token: str = Depends(check_cookie)):
 	response.status_code = status.HTTP_302_FOUND
 	response.headers["Location"] = "/"
 	app.tokens.pop(session_token)
+	return response
