@@ -10,7 +10,7 @@ app = FastAPI()
 security = HTTPBasic()
 app.counter = 0
 app.pacjenci = []
-app.uzytkownik = {"trudny": "PaC13Nt"}
+app.uzytkownik = {"trudnY": "PaC13Nt"}
 app.secret_key ="abc"
 app.tokens = {}
 
@@ -118,4 +118,4 @@ def login(response: Response, session_token: str = Depends(login_check_cred)):
     response.status_code = status.HTTP_302_FOUND
     response.headers["Location"] = "/welcome"
     response.set_cookie(key="session_token", value=session_token)
-
+    return response
