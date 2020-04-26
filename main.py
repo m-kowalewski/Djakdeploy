@@ -10,7 +10,7 @@ import secrets
 app = FastAPI()
 security = HTTPBasic()
 app.counter = 0
-app.next_patient_id=1
+app.next_patient_id=0
 app.pacjenci = {}
 app.uzytkownik = {"trudnY": "PaC13Nt"}
 app.secret_key ="abc"
@@ -44,10 +44,10 @@ def Hello():#response: Response, session_token: str = Depends(check_cookie)):
 	#response.status_code = status.HTTP_302_FOUND
 	return {"message": "Hello!"}
 
-@app.post('/')
-def Hello(response: Response, session_token: str = Depends(check_cookie)):
-	response.status_code = status.HTTP_302_FOUND
-	return {"message": "Hello!"}
+#@app.post('/')
+#def Hello(response: Response, session_token: str = Depends(check_cookie)):
+#	response.status_code = status.HTTP_302_FOUND
+#	return {"message": "Hello!"}
 
 @app.get('/welcome')
 def Hello(request: Request, response: Response, session_token: str = Depends(check_cookie)):
@@ -99,12 +99,12 @@ def patientfun(response: Response, session_token: str = Depends(check_cookie)):
 	response.status_code = status.HTTP_204_NO_CONTENT
 
 @app.post("/patient")#, response_model=DajMiCosResp)
-def patientfun(patient: DajMiCosRq,response: Response, session_token: str = Depends(check_cookie)):
+def patientfun(Rq: DajMiCosRq,response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
 	pk=f"id_{app.next_patient_id}"
-	app.pacjenci[pk]=patient.dict()
+	app.pacjenci[pk]=Rq.dict()
 	response.status_code = status.HTTP_302_FOUND
 	response.headers["Location"] = f"/patient/{pk}"
 	app.next_patient_id+=1
@@ -115,15 +115,14 @@ def patientfun(patient: DajMiCosRq,response: Response, session_token: str = Depe
 
 
 @app.get("/patient/{pk}")
-def pacjenci(pk: str,response: Response, session_token: str = Depends(check_cookie)):
+def pacjenci(pk: str, response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
 	response.status_code = status.HTTP_302_FOUND
 	if pk in app.pacjenci:
 		return app.pacjenci[pk]
-	else:
-		raise HTTPException(status_code = 204, detail = "Index not found")
+	response.status_code = status.HTTP_204_NO_CONTENT
 
 @app.delete("/patient/{pk}")
 def delete_pacjent(pk: str, response: Response, session_token: str = Depends(check_cookie)):
@@ -139,7 +138,7 @@ def login(response: Response, session_token: str = Depends(login_check_cred)):
     response.status_code = status.HTTP_302_FOUND
     response.headers["Location"] = "/welcome"
     response.set_cookie(key="session_token", value=session_token)
-    return response
+    #return response
 
 @app.post("/logout")
 def logout(response: Response, session_token: str = Depends(check_cookie)):
