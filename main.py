@@ -11,7 +11,7 @@ app = FastAPI()
 security = HTTPBasic()
 app.counter = 0
 app.next_patient_id=0
-app.pacjenci = {}
+app.patients = {}
 app.uzytkownik = {"trudnY": "PaC13Nt"}
 app.secret_key ="abc"
 app.tokens = {}
@@ -89,8 +89,8 @@ def patientfun(response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
-	if len(app.pacjenci) != 0:
-		return app.pacjenci
+	if len(app.patients) != 0:
+		return app.patients
 	#resp = {}
 	#for x in app.pacjenci.values():
 	#	resp[x.id] = { 'name': x.name, 'surname': x.surname}
@@ -104,7 +104,7 @@ def patientfun(Rq: DajMiCosRq,response: Response, session_token: str = Depends(c
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
 	pk=f"id_{app.next_patient_id}"
-	app.pacjenci[pk]=Rq.dict()
+	app.patients[pk]=Rq.dict()
 	response.status_code = status.HTTP_302_FOUND
 	response.headers["Location"] = f"/patient/{pk}"
 	app.next_patient_id+=1
@@ -119,9 +119,9 @@ def pacjenci(pk: str, response: Response, session_token: str = Depends(check_coo
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
-	response.status_code = status.HTTP_302_FOUND
-	if pk in app.pacjenci:
-		return app.pacjenci[pk]
+	#response.status_code = status.HTTP_302_FOUND
+	if pk in app.patients:
+		return app.patients[pk]
 	response.status_code = status.HTTP_204_NO_CONTENT
 
 @app.delete("/patient/{pk}")
@@ -129,7 +129,7 @@ def delete_pacjent(pk: str, response: Response, session_token: str = Depends(che
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
-	app.pacjenci.pop(pk, None)
+	app.patients.pop(pk, None)
 	response.status_code = status.HTTP_204_NO_CONTENT
 	#response.status_code = status.HTTP_302_FOUND
 
