@@ -37,8 +37,13 @@ def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
     return session_token
 
 @app.get('/')
-def Hello(response: Response, session_token: str = Depends(check_cookie)):
+def Hello():#response: Response, session_token: str = Depends(check_cookie)):
 	#response.status_code = status.HTTP_302_FOUND
+	return {"message": "Hello!"}
+
+@app.post('/')
+def Hello(response: Response, session_token: str = Depends(check_cookie)):
+	response.status_code = status.HTTP_302_FOUND
 	return {"message": "Hello!"}
 
 @app.get('/welcome')
@@ -109,7 +114,9 @@ def logout(response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
-	response.status_code = status.HTTP_302_FOUND
-	response.headers["Location"] = "/"
+	#response.status_code = status.HTTP_307_TEMPORARY_REDIRECT
+	#response.status_code = status.HTTP_302_FOUND
+	#response.headers["Location"] = "/"
 	app.tokens.pop(session_token)
-	return response
+	#return response
+	return RedirectResponse("/")
