@@ -41,7 +41,11 @@ def Hello():
 	return {"message": "Hello World during the coronavirus pandemic!"}
 
 @app.get('/welcome')
-def Hello():
+def Hello(response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	response.status_code = status.HTTP_302_FOUND
 	return {"message": "Hello World during the coronavirus pandemic!"}
 
 @app.get("/method")
@@ -69,7 +73,11 @@ class DajMiCosResp(BaseModel):
 	patient: DajMiCosRq
 
 @app.post("/patient")#, response_model=DajMiCosResp)
-def patientfun(patient: DajMiCosRq):
+def patientfun(patient: DajMiCosRq,response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	response.status_code = status.HTTP_302_FOUND
 	app.pacjenci.append(patient)
 	app.counter += 1
 	#pacjent = DajMiCosResp(id = app.counter, patient = patient)
@@ -77,7 +85,11 @@ def patientfun(patient: DajMiCosRq):
 
 
 @app.get("/patient/{pk}")
-def pacjenci(pk: int):
+def pacjenci(pk: int,response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	response.status_code = status.HTTP_302_FOUND
 	if pk < len(app.pacjenci):
 		return app.pacjenci[pk-1]
 	else:
