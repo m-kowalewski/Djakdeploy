@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Response, Request, Depends, Cookie, status
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
 from starlette.responses import RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from hashlib import sha256
@@ -13,6 +14,7 @@ app.pacjenci = []
 app.uzytkownik = {"trudnY": "PaC13Nt"}
 app.secret_key ="abc"
 app.tokens = {}
+templates = Jinja2Templates(directory="templates")
 
 def check_cookie(session_token: str = Cookie(None)):
     if session_token not in app.tokens:
@@ -47,12 +49,14 @@ def Hello(response: Response, session_token: str = Depends(check_cookie)):
 	return {"message": "Hello!"}
 
 @app.get('/welcome')
-def Hello(response: Response, session_token: str = Depends(check_cookie)):
+def Hello(request: Request, response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
 	response.status_code = status.HTTP_302_FOUND
-	return {"message": "Hello World during the coronavirus pandemic!"}
+	username = app.tokens[session_token]
+	#return {"message": "Hello World during the coronavirus pandemic!"}
+	return templates.TemplateResponse("item.html", {"request": request, "user":username})
 
 @app.get("/method")
 def method():
