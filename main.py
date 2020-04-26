@@ -83,35 +83,6 @@ def pacjenci(pk: int):
 	else:
 		raise HTTPException(status_code = 204, detail = "Index not found")
 
-#@app.post("/login")
-#def logowanie(response: Response, credentials: HTTPBasicCredentials = Depends(HTTPBasic())):
-#	if credentials.username in app.uzytkownik and credentials.password == app.users[credentials.username]:
-#		s_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret}", encoding='utf8')).hexdigest()
-#		#s_token = "{credentials.username}{credentials.password}"
-#		response.set_cookie(key="session_token", value=s_token)
-#		app.tokens.append(s_token)
-#		response.status_code = 307
-#		response.headers['Location'] = "/welcome"
-#		#RedirectResponse(url="/welcome")
-#		return response
-#	else:
-#		raise HTTPException(status_code=401, detail="Niepoprawne logowanie")
-
-#@app.post("/login")
-#def logowanie_z_cookie(user: str, password: str, response: Response):
-#	session_token = "{user}{password}"
-#	response.set_cookie(key="session_token",value=session_token)
-#	return {"message": "Welcome"}
-
-#@app.get("/data/")
-#def create_cookie(*, response: Response, session_token: str = Cookie(None)):
-#	if session_token not in Database......... :
-#		raise HTTPException(status_code=403, detail="Unathorised")
-#	response.set_cookie(key="session_token", value=session_token)
-
-#@app.post("/login2")
-#def logowanie():
-#	return {"message2": "Welcome2"}
 
 @app.post("/login")
 def login(response: Response, session_token: str = Depends(login_check_cred)):
@@ -119,3 +90,12 @@ def login(response: Response, session_token: str = Depends(login_check_cred)):
     response.headers["Location"] = "/welcome"
     response.set_cookie(key="session_token", value=session_token)
     return response
+
+@app.post("/logout")
+def logout(response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	response.status_code = status.HTTP_302_FOUND
+	response.headers["Location"] = "/"
+	app.tokens.pop(session_token)
