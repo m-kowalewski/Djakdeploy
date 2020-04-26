@@ -38,7 +38,7 @@ def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
 
 @app.get('/')
 def Hello(response: Response, session_token: str = Depends(check_cookie)):
-	response.status_code = status.HTTP_302_FOUND
+	#response.status_code = status.HTTP_302_FOUND
 	return {"message": "Hello!"}
 
 @app.get('/welcome')
