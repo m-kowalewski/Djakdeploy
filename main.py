@@ -1,57 +1,30 @@
-from fastapi import FastAPI, Request, Response, status, Cookie, HTTPException, Depends
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI, HTTPException, Response, Request, Depends, Cookie, status
 from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
+from starlette.responses import RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from hashlib import sha256
 import secrets
 
-# for debug
-'''from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse'''
-# end
-
 app = FastAPI()
 security = HTTPBasic()
-templates = Jinja2Templates(directory="templates")
-app.secret_key = "wUYwdjICbQP70WgUpRajUwxnGChAKmRtfQgYASazava4p5In7pZpFPggdB4JDjlv"
-app.patients={}
+app.counter = 0
 app.next_patient_id=0
-app.users={"trudnY":"PaC13Nt"}
-app.sessions={}
-
-MESSAGE_UNAUTHORIZED = "Log in to access this page."
-
-# for debug
-'''@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    print(jsonable_encoder({"detail": exc.errors(), "body": exc.body}))
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=jsonable_encoder({"detail": exc.errors(), "body": exc.body}),
-    )'''
-# end
-
-@app.get("/")
-def root():
-    return {"message": "Hello World during the coronavirus pandemic!"}
+app.pacjenci = {}
+app.uzytkownik = {"trudnY": "PaC13Nt"}
+app.secret_key ="abc"
+app.tokens = {}
+templates = Jinja2Templates(directory="templates")
 
 def check_cookie(session_token: str = Cookie(None)):
-    if session_token not in app.sessions:
+    if session_token not in app.tokens:
         session_token = None
     return session_token
 
-@app.get("/welcome")
-def welcome(request: Request, response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    username = app.sessions[session_token]
-    return templates.TemplateResponse("welcome.html", {"request": request, "user": username})
-
 def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
     correct = False
-    for username, password in app.users.items():
+    for username, password in app.uzytkownik.items():
         correct_username = secrets.compare_digest(credentials.username, username)
         correct_password = secrets.compare_digest(credentials.password, password)
         if (correct_username and correct_password):
@@ -63,72 +36,118 @@ def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
             headers={"WWW-Authenticate": "Basic"},
         )
     session_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret_key}", encoding='utf8')).hexdigest()
-    app.sessions[session_token]=credentials.username
+    app.tokens[session_token]=credentials.username
     return session_token
 
+@app.get('/')
+def Hello():#response: Response, session_token: str = Depends(check_cookie)):
+	#response.status_code = status.HTTP_302_FOUND
+	return {"message": "Hello!"}
 
-#@app.get("/login") # for easier testing in the browser
+#@app.post('/')
+#def Hello(response: Response, session_token: str = Depends(check_cookie)):
+#	response.status_code = status.HTTP_302_FOUND
+#	return {"message": "Hello!"}
+
+@app.get('/welcome')
+def Hello(request: Request, response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		#response.status_code = status.HTTP_401_UNAUTHORIZED
+		#return "log in to get access"
+		raise HTTPException(status_code=401, detail="Unathorised")
+	#response.status_code = status.HTTP_302_FOUND
+	username = app.tokens[session_token]
+	#return {"message": "Hello World during the coronavirus pandemic!"}
+	return templates.TemplateResponse("item.html", {"request": request, "user":username})
+
+@app.get("/method")
+def method():
+	return {"method":"GET"}
+
+@app.post("/method")
+def method():
+	return {"method":"POST"}
+
+@app.put("/method")
+def method():
+	return {"method":"PUT"}
+
+@app.delete("/method")
+def method():
+	return {"method":"DELETE"}
+
+class DajMiCosRq(BaseModel):
+	name: str
+	surname: str
+
+class DajMiCosResp(BaseModel):
+	id: int
+	patient: DajMiCosRq
+
+@app.get("/patient")
+def patientfun(response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	if len(app.pacjenci) != 0:
+		return app.pacjenci
+	#resp = {}
+	#for x in app.pacjenci.values():
+	#	resp[x.id] = { 'name': x.name, 'surname': x.surname}
+	#if resp:
+	#	return JSONResponse(resp)
+	response.status_code = status.HTTP_204_NO_CONTENT
+
+@app.post("/patient")#, response_model=DajMiCosResp)
+def patientfun(Rq: DajMiCosRq,response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	pk=f"id_{app.next_patient_id}"
+	app.pacjenci[pk]=Rq.dict()
+	response.status_code = status.HTTP_302_FOUND
+	response.headers["Location"] = f"/patient/{pk}"
+	app.next_patient_id+=1
+	#app.pacjenci.append(patient)
+	#app.counter += 1
+	###pacjent = DajMiCosResp(id = app.counter, patient = patient)
+	#return patient
+
+
+@app.get("/patient/{pk}")
+def pacjenci(pk: str, response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	response.status_code = status.HTTP_302_FOUND
+	if pk in app.pacjenci:
+		return app.pacjenci[pk]
+	response.status_code = status.HTTP_204_NO_CONTENT
+
+@app.delete("/patient/{pk}")
+def delete_pacjent(pk: str, response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	app.pacjenci.pop(pk, None)
+	response.status_code = status.HTTP_204_NO_CONTENT
+	#response.status_code = status.HTTP_302_FOUND
+
 @app.post("/login")
 def login(response: Response, session_token: str = Depends(login_check_cred)):
     response.status_code = status.HTTP_302_FOUND
     response.headers["Location"] = "/welcome"
     response.set_cookie(key="session_token", value=session_token)
+    #return response
 
-#@app.get("/logout") # for easier testing in the browser
 @app.post("/logout")
 def logout(response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    response.status_code = status.HTTP_302_FOUND
-    response.headers["Location"] = "/"
-    app.sessions.pop(session_token)
-
-@app.get("/method")
-@app.post("/method")
-@app.put("/method")
-@app.delete("/method")
-def get_method(request: Request):
-    return {"method": str(request.method)}
-
-class PatientRq(BaseModel):
-    name: str
-    surname: str
-
-# note: it is possible to use "name: str = Body(None), surname..." instead of "rq: PatientRq"
-@app.post("/patient")
-def add_patient(response: Response, rq: PatientRq, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    pid=f"id_{app.next_patient_id}"
-    app.patients[pid]=rq.dict()
-    response.status_code = status.HTTP_302_FOUND
-    response.headers["Location"] = f"/patient/{pid}"
-    app.next_patient_id+=1
-
-@app.get("/patient")
-def get_all_patients(response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    if len(app.patients) != 0:
-        return app.patients
-    response.status_code = status.HTTP_204_NO_CONTENT
-
-@app.get("/patient/{pid}")
-def get_patient(pid: str, response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    if pid in app.patients:
-        return app.patients[pid]
-    response.status_code = status.HTTP_204_NO_CONTENT
-
-@app.delete("/patient/{pid}")
-def remove_patient(pid: str, response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return MESSAGE_UNAUTHORIZED
-    app.patients.pop(pid, None)
-    response.status_code = status.HTTP_204_NO_CONTENT
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	#response.status_code = status.HTTP_307_TEMPORARY_REDIRECT
+	response.status_code = status.HTTP_302_FOUND
+	response.headers["Location"] = "/"
+	app.tokens.pop(session_token)
+	#return response
+	#return RedirectResponse("/")
