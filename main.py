@@ -51,9 +51,10 @@ def Hello(response: Response, session_token: str = Depends(check_cookie)):
 @app.get('/welcome')
 def Hello(request: Request, response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
-		response.status_code = status.HTTP_401_UNAUTHORIZED
-		return "log in to get access"
-	response.status_code = status.HTTP_302_FOUND
+		#response.status_code = status.HTTP_401_UNAUTHORIZED
+		#return "log in to get access"
+		raise HTTPException(status_code=401, detail="Unathorised")
+	#response.status_code = status.HTTP_302_FOUND
 	username = app.tokens[session_token]
 	#return {"message": "Hello World during the coronavirus pandemic!"}
 	return templates.TemplateResponse("item.html", {"request": request, "user":username})
