@@ -10,7 +10,7 @@ import secrets
 app = FastAPI()
 security = HTTPBasic()
 app.counter = 0
-app.next_patient_id=0
+app.next_patient_id=1
 app.pacjenci = {}
 app.uzytkownik = {"trudnY": "PaC13Nt"}
 app.secret_key ="abc"
@@ -78,7 +78,7 @@ def method():
 
 class DajMiCosRq(BaseModel):
 	name: str
-	surename: str
+	surname: str
 
 class DajMiCosResp(BaseModel):
 	id: int
@@ -93,7 +93,7 @@ def patientfun(response: Response, session_token: str = Depends(check_cookie)):
 		return app.pacjenci
 	#resp = {}
 	#for x in app.pacjenci.values():
-	#	resp[x.id] = { 'name': x.name, 'surename': x.surename}
+	#	resp[x.id] = { 'name': x.name, 'surname': x.surname}
 	#if resp:
 	#	return JSONResponse(resp)
 	response.status_code = status.HTTP_204_NO_CONTENT
@@ -111,7 +111,7 @@ def patientfun(patient: DajMiCosRq,response: Response, session_token: str = Depe
 	#app.pacjenci.append(patient)
 	#app.counter += 1
 	###pacjent = DajMiCosResp(id = app.counter, patient = patient)
-	return patient
+	#return patient
 
 
 @app.get("/patient/{pk}")
@@ -131,7 +131,8 @@ def delete_pacjent(pk: str, response: Response, session_token: str = Depends(che
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
 	app.pacjenci.pop(pk, None)
-	response.status_code = status.HTTP_204_NO_CONTENT
+	#response.status_code = status.HTTP_204_NO_CONTENT
+	response.status_code = status.HTTP_302_FOUND
 
 @app.post("/login")
 def login(response: Response, session_token: str = Depends(login_check_cred)):
@@ -146,8 +147,8 @@ def logout(response: Response, session_token: str = Depends(check_cookie)):
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
 	#response.status_code = status.HTTP_307_TEMPORARY_REDIRECT
-	#response.status_code = status.HTTP_302_FOUND
-	#response.headers["Location"] = "/"
+	response.status_code = status.HTTP_302_FOUND
+	response.headers["Location"] = "/"
 	app.tokens.pop(session_token)
 	#return response
-	return RedirectResponse("/")
+	#return RedirectResponse("/")
