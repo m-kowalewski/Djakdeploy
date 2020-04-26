@@ -131,8 +131,8 @@ def delete_pacjent(pk: str, response: Response, session_token: str = Depends(che
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
 	app.pacjenci.pop(pk, None)
-	#response.status_code = status.HTTP_204_NO_CONTENT
-	response.status_code = status.HTTP_302_FOUND
+	response.status_code = status.HTTP_204_NO_CONTENT
+	#response.status_code = status.HTTP_302_FOUND
 
 @app.post("/login")
 def login(response: Response, session_token: str = Depends(login_check_cred)):
