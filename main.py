@@ -83,6 +83,15 @@ class DajMiCosResp(BaseModel):
 	id: int
 	patient: DajMiCosRq
 
+@app.get("/patient")
+def patientfun(response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	if len(app.pacjenci) != 0:
+		return app.pacjenci
+	response.status_code = status.HTTP_204_NO_CONTENT
+
 @app.post("/patient")#, response_model=DajMiCosResp)
 def patientfun(patient: DajMiCosRq,response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
@@ -106,6 +115,13 @@ def pacjenci(pk: int,response: Response, session_token: str = Depends(check_cook
 	else:
 		raise HTTPException(status_code = 204, detail = "Index not found")
 
+@app.delete("/patient/{pk}")
+def delete_pacjent(pk: str, response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "log in to get access"
+	app.pacjenci.pop(pk, None)
+	response.status_code = status.HTTP_204_NO_CONTENT
 
 @app.post("/login")
 def login(response: Response, session_token: str = Depends(login_check_cred)):
