@@ -10,7 +10,8 @@ import secrets
 app = FastAPI()
 security = HTTPBasic()
 app.counter = 0
-app.pacjenci = []
+app.next_patient_id=0
+app.pacjenci = {}
 app.uzytkownik = {"trudnY": "PaC13Nt"}
 app.secret_key ="abc"
 app.tokens = {}
@@ -90,6 +91,11 @@ def patientfun(response: Response, session_token: str = Depends(check_cookie)):
 		return "log in to get access"
 	if len(app.pacjenci) != 0:
 		return app.pacjenci
+	#resp = {}
+	#for x in app.pacjenci.values():
+	#	resp[x.id] = { 'name': x.name, 'surename': x.surename}
+	#if resp:
+	#	return JSONResponse(resp)
 	response.status_code = status.HTTP_204_NO_CONTENT
 
 @app.post("/patient")#, response_model=DajMiCosResp)
@@ -97,21 +103,25 @@ def patientfun(patient: DajMiCosRq,response: Response, session_token: str = Depe
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
+	pk=f"id_{app.next_patient_id}"
+	app.pacjenci[pk]=patient.dict()
 	response.status_code = status.HTTP_302_FOUND
-	app.pacjenci.append(patient)
-	app.counter += 1
-	#pacjent = DajMiCosResp(id = app.counter, patient = patient)
+	response.headers["Location"] = f"/patient/{pk}"
+	app.next_patient_id+=1
+	#app.pacjenci.append(patient)
+	#app.counter += 1
+	###pacjent = DajMiCosResp(id = app.counter, patient = patient)
 	return patient
 
 
 @app.get("/patient/{pk}")
-def pacjenci(pk: int,response: Response, session_token: str = Depends(check_cookie)):
+def pacjenci(pk: str,response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "log in to get access"
 	response.status_code = status.HTTP_302_FOUND
-	if pk < len(app.pacjenci):
-		return app.pacjenci[pk-1]
+	if pk in app.pacjenci:
+		return app.pacjenci[pk]
 	else:
 		raise HTTPException(status_code = 204, detail = "Index not found")
 
